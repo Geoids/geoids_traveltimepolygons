@@ -11,7 +11,7 @@ class geoids_traveltimepolygons(TethysAppBase):
     icon = 'geoids_traveltimepolygons/images/car.jpg'
     package = 'geoids_traveltimepolygons'
     root_url = 'geoids_traveltimepolygons'
-    color = '#004225'
+    color = '#800000'
     description = 'This app shows how far vehicles can travel along any route through a road network in a given amount of time.'
     tags = '&quot;Transportation&quot;,&quot;Travel Times&quot;,&quot;Road Network&quot;'
     enable_feedback = False
