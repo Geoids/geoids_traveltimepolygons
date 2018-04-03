@@ -230,15 +230,19 @@
 </head>
 <h1>Map View</h1>
 
+{% block app_navigation_items %}
 
-<body>
+	{{ block.super }}
+  <div id="waiting_output"></div>
+	{% gizmo map_button %}
 	<div id="check">
 		<input type="checkbox" id="vect" checked>Vector Layer
 		<input type="checkbox" id="rast" checked>Raster Layer
 	</div>
-	{% gizmo slider1 %}
-	{% gizmo text_input %}
-	{% gizmo map_button %}
+{% endblock %}
+
+<body>
+
 	<div id="viewDiv"></div>
 </body>
 </html>
