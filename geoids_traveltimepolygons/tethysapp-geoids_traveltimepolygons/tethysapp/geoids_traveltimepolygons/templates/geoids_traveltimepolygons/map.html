@@ -1,22 +1,18 @@
 {% extends "geoids_traveltimepolygons/base.html" %}
 {% load tethys_gizmos %}
+{% load staticfiles %}
 
 <br>
 <br>
 {% block app_navigation_items %}
 
-  <div id="waiting_output"></div>
 	{{ block.super }}
-  <div id="waiting_output"></div>
 	{% gizmo map_button %}
+	<div id="waiting_output"></div>
+	<h2>Legend</h2>
+<img src="{% static '/geoids_traveltimepolygons/images/legend.png' %}">
 <br>
-	<div id="check">
-        <ol>
-		<h5><input type="checkbox" id="vect" checked>Vector Layer</h5>
 
-		<h5><input type="checkbox" id="rast" checked>Raster Layer</h5>
-	</ol>
-    </div>
 {% endblock %}
 
 {% block app_content %}
@@ -43,8 +39,9 @@ require([
   "esri/tasks/Geoprocessor",
   "esri/tasks/support/FeatureSet",
   "esri/views/MapView",
+  "esri/widgets/Legend",
   "dojo/domReady!"
-], function(Map, GraphicsLayer, Graphic, Point, Geoprocessor, FeatureSet, MapView){
+], function(Map, GraphicsLayer, Graphic, Point, Geoprocessor, FeatureSet, MapView, Legend){
 
 	//a map with basemap
 	var map = new Map({
@@ -160,6 +157,7 @@ require([
 	//main function
     function bufferPoint(event) {
 				document.getElementById("waiting_output").innerHTML = '';
+				waiting_output();
           featureSet = new FeatureSet();
           featureSet.features = inputGraphicContainer;
           BreakPoints = "5 10 15 30 60";
@@ -203,7 +201,12 @@ require([
 		  polygon_feature.symbol = fillSymbol4;
 		  graphicsLayer.add(polygon_feature);
 
+		document.getElementById("waiting_output").innerHTML = '';
+
+
 	}
+
+
 
 	function drawResultErrBack(err) {
         console.log("draw result error: ", err);
@@ -216,10 +219,17 @@ require([
         console.log("gp error: ", err);
     }
     app = {bufferPoint:bufferPoint};
+
+    function waiting_output() {
+    	var wait_text = "<strong>Loading...</strong><br>" +
+        	"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src='/static/geoids_traveltimepolygons/images/earth_globe.gif'>";
+    	document.getElementById('waiting_output').innerHTML = wait_text;
+	}
 });
 </script>
 </head>
 <body>
+
   <div id="viewDiv"></div>
 </body>
 </html>

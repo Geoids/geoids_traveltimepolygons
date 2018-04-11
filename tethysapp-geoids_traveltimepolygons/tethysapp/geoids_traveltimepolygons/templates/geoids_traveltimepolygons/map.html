@@ -61,10 +61,11 @@
 			"esri/layers/MapImageLayer",
 			"esri/layers/FeatureLayer",
 			"esri/views/MapView",
+			"esri/widgets/Legend",
 			"dojo/dom",
 			"dojo/on",
 			"dojo/domReady!"
-		], function(Map, GraphicsLayer, Graphic, Point, Geoprocessor, LinearUnit, FeatureSet, MapImageLayer, FeatureLayer, MapView, dom, on){
+		], function(Map, GraphicsLayer, Graphic, Point, Geoprocessor, LinearUnit, FeatureSet, MapImageLayer, FeatureLayer, MapView, Legend, dom, on){
 			var map = new Map({
 				basemap: "streets"
 			});
@@ -201,6 +202,17 @@
 
           gp.submitJob(params).then(completeCallback, errBack, statusCallback);
           waiting_output();
+          view.when(function() {
+				var legend = new legend({
+					view: view,
+					layerInfos: [{
+					layer: featureLayer,
+					title: "Polygon Boundaries"
+				}]
+			});
+
+		view.ui.add (legend, "bottom-right");
+	})
 
     }
 
@@ -243,6 +255,8 @@
         	"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src='/static/geoids_traveltimepolygons/images/earth_globe.gif'>";
     	document.getElementById('waiting_output').innerHTML = wait_text;
 	}
+
+
 
 	</script>
 	<title>
