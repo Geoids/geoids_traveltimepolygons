@@ -1,0 +1,236 @@
+{% extends "geoids_traveltimepolygons/base.html" %}
+{% load tethys_gizmos %}
+{% load staticfiles %}
+
+<br>
+<br>
+{% block app_navigation_items %}
+
+	{{ block.super }}
+	{% gizmo map_button %}
+	<div id="waiting_output"></div>
+	<h2>Legend</h2>
+<img src="{% static '/geoids_traveltimepolygons/images/legend.png' %}">
+<br>
+
+{% endblock %}
+
+{% block app_content %}
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  html, body, #viewDiv {
+    padding: 0;
+    margin: 0;
+    height: -webkit-fill-available;
+    width: -webkit-fill-available;
+  }
+</style>
+<link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
+<script src="https://js.arcgis.com/4.6/"></script>
+<script>
+require([
+  "esri/Map",
+  "esri/layers/GraphicsLayer",
+  "esri/Graphic",
+  "esri/geometry/Point",
+  "esri/tasks/Geoprocessor",
+  "esri/tasks/support/FeatureSet",
+  "esri/views/MapView",
+  "esri/widgets/Legend",
+  "dojo/domReady!"
+], function(Map, GraphicsLayer, Graphic, Point, Geoprocessor, FeatureSet, MapView, Legend){
+
+	//a map with basemap
+	var map = new Map({
+    basemap: "streets"
+	});
+
+    //a graphics layer to show input point and output polygon
+    var graphicsLayer = new GraphicsLayer();
+    map.add(graphicsLayer);
+
+    var view = new MapView({
+    container: "viewDiv",
+    map: map,
+	center: [-111.8516, 40.4],
+	zoom: 10
+    });
+
+	// symbol for input point
+	var markerSymbol = {
+          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+          color: [0, 0, 0],
+          size: 9,
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+
+	// symbol for buffered polygon0
+    var fillSymbol0 = {
+          type: "simple-fill", // autocasts as new SimpleFillSymbol()
+          color: [255, 0, 0, 0.75],
+          style: "solid",
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+    // symbol for buffered polygon1
+    var fillSymbol1 = {
+          type: "simple-fill", // autocasts as new SimpleFillSymbol()
+          color: [255, 128, 0, 0.75],
+          style: "solid",
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+    // symbol for buffered polygon2
+    var fillSymbol2 = {
+          type: "simple-fill", // autocasts as new SimpleFillSymbol()
+          color: [255, 255, 0, 0.75],
+          style: "solid",
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+    // symbol for buffered polygon3
+    var fillSymbol3 = {
+          type: "simple-fill", // autocasts as new SimpleFillSymbol()
+          color: [128, 255, 0, 0.75],
+          style: "solid",
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+    // symbol for buffered polygon4
+    var fillSymbol4 = {
+          type: "simple-fill", // autocasts as new SimpleFillSymbol()
+          color: [0, 102, 0, 0.75],
+          style: "solid",
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+
+	// Geoprocessing service url
+	var gpUrl = "http://geoserver2.byu.edu/arcgis/rest/services/Geoids/CalculateTTPolygonsUT/GPServer/Calculate%20DriveTime%20Polygons";
+
+    // create a new Geoprocessor
+	var gp = new Geoprocessor(gpUrl);
+	// define output spatial reference
+    gp.outSpatialReference = { // autocasts as new SpatialReference()
+          wkid: 102100 //EPSG3857
+        };
+    //define some variables
+    var point
+    var inputGraphic
+    var inputGraphicContainer
+    var featureSet
+    var BreakPoints
+
+	//add map click function
+    view.on("click", startPoint);
+    function startPoint(event) {
+    	graphicsLayer.removeAll();
+          point = new Point({
+            longitude: event.mapPoint.longitude,
+            latitude: event.mapPoint.latitude
+          });
+          inputGraphic = new Graphic({
+            geometry: point,
+            symbol: markerSymbol
+          });
+          graphicsLayer.add(inputGraphic);
+          inputGraphicContainer = [];
+          inputGraphicContainer.push(inputGraphic);
+	}
+
+	//main function
+    function bufferPoint(event) {
+				document.getElementById("waiting_output").innerHTML = '';
+				waiting_output();
+          featureSet = new FeatureSet();
+          featureSet.features = inputGraphicContainer;
+          BreakPoints = "5 10 15 30 60";
+
+
+		  // input parameters
+          var params = {
+            "Starting_Location": featureSet,
+            "Drive_Time_Values": BreakPoints
+          };
+          gp.submitJob(params).then(completeCallback, errBack, statusCallback);
+    }
+
+	function completeCallback(result){
+
+        gp.getResultData(result.jobId, "Travel_Time_Polygons").then(drawResult, drawResultErrBack);
+		graphicsLayer.add(inputGraphic);
+        var inputGraphicContainer = [];
+        inputGraphicContainer.push(inputGraphic);
+	}
+
+	function drawResult(data){
+
+	      var polygon_feature = data.value.features[0];
+		  polygon_feature.symbol = fillSymbol0;
+		  graphicsLayer.add(polygon_feature);
+
+		  var polygon_feature = data.value.features[1];
+		  polygon_feature.symbol = fillSymbol1;
+		  graphicsLayer.add(polygon_feature);
+
+		  var polygon_feature = data.value.features[2];
+		  polygon_feature.symbol = fillSymbol2;
+		  graphicsLayer.add(polygon_feature);
+
+		  var polygon_feature = data.value.features[3];
+		  polygon_feature.symbol = fillSymbol3;
+		  graphicsLayer.add(polygon_feature);
+
+		  var polygon_feature = data.value.features[4];
+		  polygon_feature.symbol = fillSymbol4;
+		  graphicsLayer.add(polygon_feature);
+
+		document.getElementById("waiting_output").innerHTML = '';
+
+
+	}
+
+
+
+	function drawResultErrBack(err) {
+        console.log("draw result error: ", err);
+    }
+
+	function statusCallback(data) {
+        console.log(data.jobStatus);
+    }
+    function errBack(err) {
+        console.log("gp error: ", err);
+    }
+    app = {bufferPoint:bufferPoint};
+
+    function waiting_output() {
+    	var wait_text = "<strong>Loading...</strong><br>" +
+        	"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src='/static/geoids_traveltimepolygons/images/earth_globe.gif'>";
+    	document.getElementById('waiting_output').innerHTML = wait_text;
+	}
+});
+</script>
+</head>
+<body>
+
+  <div id="viewDiv"></div>
+</body>
+</html>
+{% endblock %}
